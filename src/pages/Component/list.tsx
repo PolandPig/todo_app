@@ -4,7 +4,7 @@ import { DeleteOutlined } from '@ant-design/icons';
 import { colors } from '@/pages/Component/interface';
 import store from '@/pages/Global/Store/store';
 
-export default function index() {
+export default function index(props: any) {
   /**
    * 监听变化
    */
@@ -19,21 +19,43 @@ export default function index() {
   const DeleteItem = (id: string) => {
     const todoList = store.getState();
     const result = todoList.filter((item) => item.id !== id);
+    const { form } = props;
     store.dispatch({
       type: 'DELETEITEM',
       value: result,
     });
+    props.UpdateIdFunction('');
+    form.resetFields();
+  };
+
+  /**
+   * 点击事件
+   * @param item
+   */
+  const HandleUpdate = (item: any) => {
+    const { form } = props;
+    form.setFieldsValue({
+      todo: item.title,
+    });
+    props.UpdateIdFunction(item.id);
   };
 
   return (
     <div className={styles.container}>
       {store.getState()?.map((item: any) => {
         return (
-          <div className={styles.listItem}>
+          <div
+            className={styles.listItem}
+            onClick={(e) => {
+              e.stopPropagation();
+              HandleUpdate(item);
+            }}
+          >
             {item.title}{' '}
             <DeleteOutlined
               style={{ color: colors.gray, cursor: 'pointer' }}
-              onClick={() => {
+              onClick={(e) => {
+                e.stopPropagation();
                 DeleteItem(item.id);
               }}
             />

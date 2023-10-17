@@ -2,7 +2,7 @@
  * @Author: xuzc 1328914049@qq.com
  * @Date: 2023-10-17 15:27:12
  * @LastEditors: xuzc 1328914049@qq.com
- * @LastEditTime: 2023-10-17 20:17:47
+ * @LastEditTime: 2023-10-17 22:02:12
  * @FilePath: \MyComponent\src\pages\index.tsx
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  */
@@ -15,6 +15,7 @@ import ListComponent from './Component/list';
 
 export default function IndexPage(props: any) {
   const [todoList, setTodoList] = useState<Array<any>>([]);
+  const [currentUpdateId, setCurrentUpdateId] = useState<string>('');
   const [form] = Form.useForm();
 
   /**
@@ -30,13 +31,14 @@ export default function IndexPage(props: any) {
    * @param id
    */
   const AddItem = (context: string) => {
-    if (context !== null && context.trim() !== '') {
+    if (context !== null && context?.trim() !== '') {
       const uuid = generateUUID();
       store.dispatch({
         type: 'ADDITEM',
         value: [...todoList, { id: uuid, title: context }],
       });
     }
+    resetInput()
   };
 
   /**
@@ -47,12 +49,55 @@ export default function IndexPage(props: any) {
       type: 'CLEARITEM',
       value: [],
     });
+    resetInput()
   };
 
   const handleClick = () => {
     const values = form.getFieldsValue();
-    AddItem(values.todo);
+    if (currentUpdateId !== '') {
+      UpdateItem(currentUpdateId, values.todo);
+      return;
+    }
+    if (currentUpdateId === '') {
+      AddItem(values.todo);
+    }
   };
+
+  /**
+   * 更新List
+   * @param id 
+   * @param context 
+   */
+  const UpdateItem = (id: string, context: string) => {
+    if (id !== '') {
+      const res = todoList;
+      const idx = res.findIndex((item) => item.id === id);
+      if (idx !== -1) {
+        res[idx].title = context;
+        store.dispatch({
+          type: 'UPDATEITEM',
+          value: [...res],
+        });
+      }
+    }
+    resetInput()
+  };
+
+  /**
+   * 设置需要更新的ID
+   * @param id 
+   */
+  const UpdateIdFunction = (id: string) => {
+    setCurrentUpdateId(id);
+  };
+
+  /**
+   * 重置输入框
+   */
+  const resetInput = ()=>{
+    setCurrentUpdateId('');
+    form.resetFields();
+  }
 
   return (
     <div className={styles.box}>
@@ -68,10 +113,10 @@ export default function IndexPage(props: any) {
       </Form>
       <div className={styles.todoTitle}>{`共${todoList.length}条`}</div>
 
-      <ListComponent />
+      <ListComponent form={form} UpdateIdFunction={UpdateIdFunction} />
 
       <Button className={styles.marginT10} type="primary" onClick={handleClick}>
-        添加待办事项
+        {currentUpdateId !== '' ? '确定修改' : '添加待办事项'}
       </Button>
 
       <Button className={styles.marginT10} type="primary" onClick={ClearItem}>
